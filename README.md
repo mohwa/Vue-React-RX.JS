@@ -1,2 +1,2 @@
-# RXJS-example
-RXJS-example
+# VUE / REACT / RX Implementation
+

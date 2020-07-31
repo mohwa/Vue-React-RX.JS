@@ -5,4 +5,10 @@ export default class Data {
       return acc;
     }, new Map());
   }
+  static forEach(v = {}, f = () => {}) {
+    Object.keys(v).forEach(f);
+  }
+  static map(v = {}, f = () => {}) {
+    return Object.keys(v).map(f);
+  }
 }

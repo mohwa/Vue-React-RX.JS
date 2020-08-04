@@ -1,33 +1,8 @@
-import Data from '@vue/Data';
 import Dom from '@vue/Dom';
+// import Data from '@vue/Data';
+import Component from '@vue/Component';
+import Watcher from '@vue/Watcher';
 
-class Component {
-  tagName = '';
-  children = [];
-  options = {};
-  constructor(tagName = '', options = {}) {
-    this.tagName = tagName;
-    this.options = options;
-
-    this.children = this.getChildren();
-  }
-  static factory(...args) {
-    return new Component(...args);
-  }
-  getChildren() {
-    const { components } = this.options;
-    const ret = [];
-
-    Data.forEach(components, k => {
-      const v = components[k];
-      const vv = Component.factory(k, v);
-
-      ret.push(vv);
-    });
-
-    return ret;
-  }
-}
 
 export default class Vue {
   options = {};
@@ -35,13 +10,15 @@ export default class Vue {
   static $$components = new Map();
   constructor(options = {}) {
     this.options = options;
+
     this.rootComponent = this.getRootComponent();
 
     this.render();
   }
-  static component(tagName, opt) {
-    const v = Component.factory(tagName, opt);
-    this.$$components.set(v, v);
+  static component(tagName, options) {
+    const v = Component.factory(tagName, options);
+
+    this.$$components.set(v, options);
 
     return v;
   }
@@ -51,13 +28,8 @@ export default class Vue {
     this.render();
   }
   getRootComponent() {
-    const { template, components } = this.options;
-
-    if (template) {
-      return Component.factory('root', {
-        template,
-        components,
-      });
+    if (this.options.template) {
+      return Component.factory('root', this.options);
     }
     return null;
   }
@@ -73,7 +45,7 @@ export default class Vue {
     this.parseGlobalComponents(rootElement);
 
     if (template) {
-      rootElement.appendChild(this.parseRootComponent());
+      rootElement.appendChild(this.rootComponent.parse());
     }
   }
   parseGlobalComponents(root) {
@@ -92,53 +64,5 @@ export default class Vue {
     });
 
     return root;
-  }
-  parseRootComponent() {
-    const stacks = [this.rootComponent];
-    let stack;
-
-    const fragment = new DocumentFragment();
-    const templateElement = Dom.getElementByTemplate(stacks[0].options.template);
-
-    fragment.appendChild(templateElement);
-
-    while (stack = stacks.pop()) {
-      const { children, options: { template } = {} } = stack;
-      const matchedChildren = [];
-
-      const checkElement = Dom.getElementByTemplate(template);
-
-      if (template) {
-        children.forEach(v => {
-          const { tagName, options } = v;
-          const checkTargets = Object.values(checkElement.getElementsByTagName(tagName));
-          const targets = Object.values(templateElement.getElementsByTagName(tagName));
-
-          checkTargets.forEach((vv, index) => {
-            if (vv.parentNode) {
-              const target = targets[index];
-              const el = Dom.getElementByTemplate(options.template);
-
-              if (el) {
-                matchedChildren.push(v);
-                target.parentNode.replaceChild(el, target);
-              }
-            }
-          });
-        });
-
-        let length = children.length;
-
-        while (length--) {
-          const child = children[length];
-
-          if (matchedChildren.includes(child)) {
-            stacks.push(child);
-          }
-        }
-      }
-    }
-
-    return fragment;
   }
 }

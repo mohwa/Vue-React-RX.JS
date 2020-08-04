@@ -1,9 +1,15 @@
 export default class Data {
   static objectToMap(v) {
-    return Object.keys(v).reduce((acc, k) => {
-      acc.set(k, v[k]);
-      return acc;
-    }, new Map());
+    const ret = new Map();
+
+    if (v) {
+      return Object.keys(v).reduce((acc, k) => {
+        acc.set(k, v[k]);
+        return acc;
+      }, ret);
+    } else {
+      return ret;
+    }
   }
   static forEach(v = {}, f = () => {}) {
     Object.keys(v).forEach(f);

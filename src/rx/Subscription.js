@@ -1,12 +1,12 @@
 export default class Subscription {
-  observers = new Set();
-  constructor(observer) {
-    this.observers.add(observer);
+  subscriber = new Set();
+  constructor(subscriber) {
+    this.subscriber.add(subscriber);
   }
   static factory(v) {
     return new Subscription(v);
   }
   unsubscribe() {
-    this.observers.clear();
+    this.subscriber.clear();
   }
 }

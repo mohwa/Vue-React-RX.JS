@@ -1,4 +1,3 @@
-import { query } from "./dom";
 import Subject from '@rx/Subject';
 import { toDom } from './dom';
 import StateManager from "./hooks/stateManager";
@@ -60,7 +59,6 @@ export function component(createComponent) {
         }
 
         if (!oldStack) {
-          console.log(111);
           if (newStack) {
             if (newStack.nodeType === 3) {
               if (newStack.parentNode) {
@@ -70,19 +68,14 @@ export function component(createComponent) {
               }
             }
           } else {
-            // console.log('newStack 도 없는 상황');
+            console.log('newStack 도 없는 상황');
           }
         }
 
         if (newStack?.nodeType !== oldStack?.nodeType) {
-          console.log(111);
-          console.dir(newStack);
-          console.dir(oldStack);
-          // oldStack.replaceWith(newStack);
+          oldStack.replaceWith(String(newStack));
         } else {
           if (newStack.nodeType === 3) {
-            console.dir(oldStack.nodeValue);
-            console.dir(newStack.nodeValue);
             if (newStack.nodeValue !== oldStack.nodeValue) {
               oldStack.replaceWith(newStack);
             }

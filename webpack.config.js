@@ -27,6 +27,7 @@ module.exports = {
       '@react': resolve('src/react'),
       '@vue': resolve('src/vue'),
       '@rx': resolve('src/rx'),
+      '@xact': resolve('src/xact'),
     },
   },
   module: {

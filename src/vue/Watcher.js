@@ -11,8 +11,6 @@ export default class Watcher {
     Object.assign(this.$watcher, options.data);
     Object.assign(this.$watcher, this.getComputed(options));
     Object.assign(this.$state, this.$watcher);
-
-    console.log(321312312, this, options.data);
   }
   static factory(v) {
     return new Watcher(v);

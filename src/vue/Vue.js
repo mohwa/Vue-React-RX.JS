@@ -1,8 +1,5 @@
 import Dom from '@vue/Dom';
-// import Data from '@vue/Data';
-import Component from '@vue/Component';
-import Watcher from '@vue/Watcher';
-
+import Component, {Components} from '@vue/Component';
 
 export default class Vue {
   options = {};
@@ -10,6 +7,7 @@ export default class Vue {
   static $$components = new Map();
   constructor(options = {}) {
     this.options = options;
+    this.options.$vue = this;
 
     this.rootComponent = this.getRootComponent();
 
@@ -45,7 +43,8 @@ export default class Vue {
     this.parseGlobalComponents(rootElement);
 
     if (template) {
-      rootElement.appendChild(this.rootComponent.parse());
+      document.querySelector(this.options.selector).innerHTML = '';
+      this.parseRootComponent();
     }
   }
   parseGlobalComponents(root) {
@@ -64,5 +63,49 @@ export default class Vue {
     });
 
     return root;
+  }
+  parseRootComponent() {
+    const rootKey = 'root';
+    const stacks = [Components.get(rootKey)];
+    let stack;
+
+    while (stack = stacks.pop()) {
+      const { children, template } = stack;
+      const matchedChildren = [];
+
+      const parentElement = Dom.getElementByTemplate(template());
+
+      console.log(parentElement);
+
+      if (template) {
+        children.forEach((child) => {
+          const { tagName, template } = child;
+          const targetElements = Object.values(parentElement.getElementsByTagName(tagName));
+
+          if (targetElements.length) {
+            matchedChildren.push(child);
+          }
+
+          targetElements.forEach((targetElement) => {
+            const childElement = Dom.getElementByTemplate(template());
+            targetElement.replaceWith(childElement);
+          });
+        });
+
+        let length = children.length;
+
+        while (length--) {
+          const child = children[length];
+
+          if (matchedChildren.includes(child)) {
+            stacks.push(child);
+          }
+        }
+      }
+    }
+
+    // console.log(parsedElements);
+
+    // document.querySelector(this.options.selector).appendChild(oldParentElement);
   }
 }

@@ -1,15 +1,28 @@
-import Vuex from '@vue/Vuex';
+import {createSubject} from './observer.js';
+import {mapValues} from './mapValues.js';
 
-export default Vuex.Store({
-  state: {
-    count: 1,
-  },
-  modules: {
-    x: {
-      xx: 1,
-    },
-    y: {
-      xx: 2,
-    }
+export const createStore = () => {
+  const subject = createSubject();
+  const useState = (state = {}) => {
+    return mapValues(state, (value) => {
+      const get = () => value;
+      const set = (newValue, shouldNotify = true) => {
+        value = newValue;
+        shouldNotify && subject.notify()
+      };
+      return {get, set}
+    });
+  };
+  const share = (store) => {
+    store._subscribe(() => {
+      subject.notify();
+    })
+  };
+
+  return {
+    useState,
+    share,
+    _subscribe: subject.subscribe,
+    _unsubscribe: subject.unsubscribe,
   }
-});
+};

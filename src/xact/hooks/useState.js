@@ -1,4 +1,4 @@
-export default function useState(subject, stateManager, defaultValue) {
+export default function useState(stateManager, subject, defaultValue) {
   const sequence = stateManager.getSequence();
   let value;
 

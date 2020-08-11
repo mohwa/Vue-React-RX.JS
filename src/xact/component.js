@@ -1,10 +1,12 @@
 import Subject from '@rx/Subject';
-import { toDom } from './dom';
+import { toDom } from './utils/dom';
 import StateManager from "./hooks/stateManager";
 import useState from './hooks/useState';
 import useEffect from './hooks/useEffect';
 import useMemo from './hooks/useMemo';
 import useCallback from './hooks/useCallback';
+import useSelector from './hooks/useSelector';
+import Store from './store';
 
 export function component(createComponent) {
   return ({ props = {} } = {}) => {
@@ -14,6 +16,8 @@ export function component(createComponent) {
     const _useEffect = useEffect.bind(null, stateManager);
     const _useMemo = useMemo.bind(null, stateManager);
     const _useCallback = useCallback.bind(null, stateManager);
+    const _useSelector = useSelector.bind(null, stateManager);
+    const dispatch = Store.dispatch.bind(Store, stateManager, subject);
     const state = {
       dom: null,
     };
@@ -26,14 +30,18 @@ export function component(createComponent) {
         useEffect: _useEffect,
         useMemo: _useMemo,
         useCallback: _useCallback,
+        useSelector: _useSelector,
+        dispatch,
       });
     };
 
     function observer() {
-      const newDom = render();
+      let newDom = render();
 
       if (state.dom) {
-        replaceDomWithDiff(state.dom, newDom);
+        state.dom.replaceWith(newDom);
+        // newDom = replaceDomWithDiff(state.dom, newDom);
+        // console.log(newDom);
       }
       state.dom = newDom;
     }
@@ -63,7 +71,7 @@ export function component(createComponent) {
             if (newStack.nodeType === 3) {
               if (newStack.parentNode) {
                 if (oldParentStack.nodeType === newStack.parentNode.nodeType) {
-                  oldParentStack.appendChild(newStack);
+                  // oldParentStack.appendChild(newStack);
                 }
               }
             }
@@ -73,11 +81,11 @@ export function component(createComponent) {
         }
 
         if (newStack?.nodeType !== oldStack?.nodeType) {
-          oldStack.replaceWith(String(newStack));
+          // oldStack.replaceWith(newStack);
         } else {
-          if (newStack.nodeType === 3) {
+          if (newStack?.nodeType === 3) {
             if (newStack.nodeValue !== oldStack.nodeValue) {
-              oldStack.replaceWith(newStack);
+              // oldStack.replaceWith(newStack);
             }
           }
         }
@@ -93,6 +101,8 @@ export function component(createComponent) {
         }
       }
       while (newStack);
+
+      return prevDom;
     }
 
     return state.dom;

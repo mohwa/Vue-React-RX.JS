@@ -9,11 +9,8 @@ export default function useEffect(stateManager, next = () => {}, state = []) {
       if (stateManager.isChanged(sequence, state)) {
         stateManager.setState(sequence, { next, state });
         next();
-      } else {
-        stateManager.getState(sequence).next();
       }
     }
   }
-
   stateManager.next();
 };

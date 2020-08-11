@@ -1,7 +1,7 @@
-import {events, query, replaceWith } from './dom.js';
-import { component } from './Component.js';
+import {events, query, replaceWith } from '../utils/dom.js';
+import { component } from '../component.js';
 
-export const Parent = component(({ props, toDom, useState, useEffect, useCallback }) => {
+export const Acomponent = component(({ props, toDom, useState, useEffect, useCallback }) => {
   const [show, setShow] = useState(false);
   const [value, setValue] = useState('INPUT VALUE');
 

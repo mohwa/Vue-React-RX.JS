@@ -4,14 +4,16 @@ export default function useState(stateManager, subject, defaultValue) {
 
   const setValue = (newValue) => {
     const compareValue = stateManager.getState(sequence);
+    console.log('compareValue', sequence, compareValue, newValue);
 
     if (newValue !== compareValue) {
+      console.log('setState', sequence, newValue);
       stateManager.setState(sequence, newValue);
 
       setTimeout(() => {
-        stateManager.dispose();
-
         console.log('replaceDom');
+
+        stateManager.dispose();
         subject.next();
       });
     }
@@ -22,8 +24,8 @@ export default function useState(stateManager, subject, defaultValue) {
     stateManager.setState(sequence, value);
   } else {
     value = stateManager.getState(sequence);
+    // console.log(sequence, value);
   }
-
   stateManager.next();
 
   return [value, setValue];

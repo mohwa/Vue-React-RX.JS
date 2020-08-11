@@ -1,4 +1,4 @@
-import useMemo from '@react/useMemo';
+import useMemo from './useMemo';
 
 export default function useCallback(stateManager, next = () => {}, state = []) {
   return useMemo(stateManager, () => next, state);

@@ -15,7 +15,6 @@ export default class StateManager {
   }
   isChanged(k, state) {
     const { state: prevState } = this.getState(k);
-
     return prevState.some((v, i) => v !== state[i]);
   }
   getSequence() {

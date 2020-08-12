@@ -1,6 +1,6 @@
 import Data from './utils/data';
 
-export class Store {
+export default class Store {
   static reducers = {};
   static state = {};
   static createStore(reducers) {
@@ -10,20 +10,22 @@ export class Store {
   static getState() {
     return this.state;
   }
-  static dispatch(stateManager, subject, action = {}) {
-    Data.forEach(this.reducers, (v, k) => {
-      const newState = v(null, action);
+  static createDispatch(stateManager, subject) {
+    const { reducers, state } = this;
 
-      if (newState) {
-        this.state[k] = newState;
+    return (action) => {
+      Data.forEach(reducers, (v, k) => {
+        const newState = v(state[k], action);
 
-        setTimeout(() => {
-          stateManager.dispose();
-          subject.next();
-        });
-      }
-    });
+        if (newState) {
+          this.state[k] = newState;
+
+          setTimeout(() => {
+            stateManager.dispose();
+            subject.next();
+          });
+        }
+      });
+    };
   }
-}
-
-export default Store;
+};

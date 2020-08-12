@@ -1,18 +1,33 @@
 import { events, query, replaceWith } from '../utils/dom.js';
 import { component } from '../component.js';
 import aActions from '../actions/aActions';
+import bActions from '../actions/bActions';
 
 export const Acomponent = component(({ props, toDom, useState, useEffect, useCallback, useSelector, dispatch }) => {
   const [show, setShow] = useState(false);
   const [value, setValue] = useState('INPUT VALUE');
-  let xState = useSelector(state => state.aReducer.x);
+  const aXState = useSelector(state => state.aReducer.x);
+  const bYState = useSelector(state => state.bReducer.y);
 
   const onClick = useCallback(() => {
-    const ret = !show;
-    console.log('onClick', show, ret);
-    setShow(ret);
-    dispatch({ type: aActions.SET_X, payload: ++xState });
+    setShow(!show);
   }, [show]);
+
+  const addX = useCallback(() => {
+    dispatch({ type: aActions.SET_X, payload: aXState + 1 });
+  }, [aXState]);
+
+  const subX = useCallback(() => {
+    dispatch({ type: aActions.SET_X, payload: aXState - 1 });
+  }, [aXState]);
+
+  const addY = useCallback(() => {
+    dispatch({ type: bActions.SET_Y, payload: bYState + 1 });
+  }, [bYState]);
+
+  const subY = useCallback(() => {
+    dispatch({ type: bActions.SET_Y, payload: bYState - 1 });
+  }, [bYState]);
 
   const Submit = useCallback((value) => {
     setValue(value);
@@ -29,9 +44,13 @@ export const Acomponent = component(({ props, toDom, useState, useEffect, useCal
   const dom = toDom(
     `<div>
       <div>${show}</div>
-      <div>${xState}</div>
+      <div>${aXState} / ${bYState}</div>
       <div>${value}</div>
-      <button>PARENT BUTTON CLICK</button>
+      <button class="btn1">PARENT BUTTON CLICK</button>
+      <button class="btn2">X ADD BUTTON CLICK</button>
+      <button class="btn3">X SUB BUTTON CLICK</button>
+      <button class="btn4">Y ADD BUTTON CLICK</button>
+      <button class="btn5">Y SUB BUTTON CLICK</button>      
       <child-button></child-button>
       <child-input></child-input>
     </div>`
@@ -40,7 +59,11 @@ export const Acomponent = component(({ props, toDom, useState, useEffect, useCal
   replaceWith(query(dom, 'child-button'), ChildButton({ props: { buttonName: 'CHILD BUTTON CLICK' }}));
   replaceWith(query(dom, 'child-input'), ChildInput({ props: { Submit }}));
 
-  events(query(dom, 'button'), { click: onClick });
+  events(query(dom, '.btn1'), { click: onClick });
+  events(query(dom, '.btn2'), { click: addX });
+  events(query(dom, '.btn3'), { click: subX });
+  events(query(dom, '.btn4'), { click: addY });
+  events(query(dom, '.btn5'), { click: subY });
 
   return dom;
 });
@@ -48,6 +71,8 @@ export const Acomponent = component(({ props, toDom, useState, useEffect, useCal
 export const ChildButton = component(({ props, toDom, useState, useCallback, useEffect }) => {
   const [show, setShow] = useState(true);
   const [arr, setArr] = useState([]);
+
+  console.log(arr);
 
   const onClick = useCallback(() => {
     setShow(!show);
@@ -96,7 +121,9 @@ export const ChildInput = component(({ props, toDom, useState, useCallback }) =>
   });
 
   events(query(dom, 'button'), {
-    click: () => props.Submit(inputElem.value),
+    click: () => {
+      props.Submit(inputElem.value);
+    }
   });
 
   return dom;

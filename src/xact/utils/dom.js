@@ -20,7 +20,7 @@ export const events = (node, options) => {
   Object
     .entries(options)
     .forEach(([eventName, listener]) => {
-      node.addEventListener(eventName, listener)
+      node.addEventListener(eventName, listener);
     })
 };
 

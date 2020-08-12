@@ -1,23 +1,23 @@
 import Subject from '@rx/Subject';
 import { toDom } from './utils/dom';
 import StateManager from "./hooks/stateManager";
-import useState from './hooks/useState';
-import useEffect from './hooks/useEffect';
-import useMemo from './hooks/useMemo';
-import useCallback from './hooks/useCallback';
-import useSelector from './hooks/useSelector';
+import createUseState from './hooks/createUseState';
+import createUseEffect from './hooks/createUseEffect';
+import createUseMemo from './hooks/createUseMemo';
+import createUseCallback from './hooks/createUseCallback';
+import createUseSelector from './hooks/createUseSelector';
 import Store from './store';
 
 export function component(createComponent) {
   return ({ props = {} } = {}) => {
     const subject = Subject.factory();
     const stateManager = StateManager.factory();
-    const _useState = useState.bind(null, stateManager, subject);
-    const _useEffect = useEffect.bind(null, stateManager);
-    const _useMemo = useMemo.bind(null, stateManager);
-    const _useCallback = useCallback.bind(null, stateManager);
-    const _useSelector = useSelector.bind(null, stateManager);
-    const dispatch = Store.dispatch.bind(Store, stateManager, subject);
+    const useState = createUseState(stateManager, subject);
+    const useEffect = createUseEffect(stateManager);
+    const useMemo = createUseMemo(stateManager);
+    const useCallback = createUseCallback(stateManager);
+    const useSelector = createUseSelector(stateManager);
+    const dispatch = Store.createDispatch(stateManager, subject);
     const state = {
       dom: null,
     };
@@ -26,11 +26,11 @@ export function component(createComponent) {
       return createComponent({
         props,
         toDom,
-        useState: _useState,
-        useEffect: _useEffect,
-        useMemo: _useMemo,
-        useCallback: _useCallback,
-        useSelector: _useSelector,
+        useState,
+        useEffect,
+        useMemo,
+        useCallback,
+        useSelector,
         dispatch,
       });
     };
@@ -40,8 +40,9 @@ export function component(createComponent) {
 
       if (state.dom) {
         state.dom.replaceWith(newDom);
+        // 이전에 등록된 DOM 이벤트들도 전부 가져와야한다.
+        // 새롭게 바인딩된 이벤트 함수들은 새롭게 생성한 DOM에 바인딩되어있다.
         // newDom = replaceDomWithDiff(state.dom, newDom);
-        // console.log(newDom);
       }
       state.dom = newDom;
     }
@@ -66,12 +67,13 @@ export function component(createComponent) {
           oldParentStack = oldStack;
         }
 
+        console.log(newStack);
         if (!oldStack) {
           if (newStack) {
             if (newStack.nodeType === 3) {
               if (newStack.parentNode) {
                 if (oldParentStack.nodeType === newStack.parentNode.nodeType) {
-                  // oldParentStack.appendChild(newStack);
+                  oldParentStack.appendChild(newStack);
                 }
               }
             }
@@ -81,12 +83,14 @@ export function component(createComponent) {
         }
 
         if (newStack?.nodeType !== oldStack?.nodeType) {
-          // oldStack.replaceWith(newStack);
+          oldStack.replaceWith(newStack);
         } else {
           if (newStack?.nodeType === 3) {
             if (newStack.nodeValue !== oldStack.nodeValue) {
-              // oldStack.replaceWith(newStack);
+              oldStack.replaceWith(newStack);
             }
+          } else {
+            oldStack.replaceWith(newStack);
           }
         }
 

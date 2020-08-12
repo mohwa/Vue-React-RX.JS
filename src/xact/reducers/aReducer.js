@@ -14,8 +14,6 @@ export default createReducer(initialState, {
     };
   },
   [aActions.SET_Y](state, action) {
-    console.log(state, action);
-
     return {
       ...initialState,
       y: action.payload,

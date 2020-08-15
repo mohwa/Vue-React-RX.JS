@@ -1,5 +1,6 @@
-export function toDom(template) {
+export function toDOM(template) {
   const body = document.createElement('body');
+
   body.innerHTML = template;
 
   if (body.childNodes.length > 1) {
@@ -8,23 +9,23 @@ export function toDom(template) {
   return body.childNodes[0];
 }
 
-export const append = (parentNode, childNode) => {
-  parentNode.appendChild(childNode)
-};
+export function append(parentNode, childNode) {
+  return parentNode.appendChild(childNode);
+}
 
-export const query = (parentNode, selector) => {
-  return parentNode.querySelector(selector)
-};
+export function query(v, selector) {
+  return v.querySelector(selector);
+}
 
-export const events = (node, options) => {
-  Object
-    .entries(options)
-    .forEach(([eventName, listener]) => {
-      node.addEventListener(eventName, listener);
-    })
-};
+// export function events(node, options) {
+//   Object
+//     .entries(options)
+//     .forEach(([eventName, listener]) => {
+//       node.addEventListener(eventName, listener);
+//     });
+// }
 
-export const replaceWith = (oldNode, newNode) => {
-  oldNode.replaceWith(newNode)
-};
+export function replaceWith(oldNode, newNode) {
+  oldNode.replaceWith(newNode);
+}
 

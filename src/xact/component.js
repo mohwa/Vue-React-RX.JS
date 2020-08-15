@@ -1,5 +1,5 @@
 import Subject from '@rx/Subject';
-import { toDom } from './utils/dom';
+import { toDOM } from './utils/dom';
 import StateManager from "./hooks/stateManager";
 import createUseState from './hooks/createUseState';
 import createUseEffect from './hooks/createUseEffect';
@@ -7,6 +7,7 @@ import createUseMemo from './hooks/createUseMemo';
 import createUseCallback from './hooks/createUseCallback';
 import createUseSelector from './hooks/createUseSelector';
 import Store from './store';
+import Event from './utils/event';
 
 export function component(createComponent) {
   return ({ props = {} } = {}) => {
@@ -22,27 +23,31 @@ export function component(createComponent) {
       dom: null,
     };
 
-    const render = () => {
+    const render = (event) => {
       return createComponent({
         props,
-        toDom,
+        toDOM,
+      }, {
         useState,
         useEffect,
         useMemo,
         useCallback,
         useSelector,
         dispatch,
+        event,
       });
     };
 
     function observer() {
-      let newDom = render();
+      const event = Event.factory();
+      let newDom = render(event);
 
       if (state.dom) {
-        state.dom.replaceWith(newDom);
+        // state.dom.replaceWith(newDom);
         // 이전에 등록된 DOM 이벤트들도 전부 가져와야한다.
         // 새롭게 바인딩된 이벤트 함수들은 새롭게 생성한 DOM에 바인딩되어있다.
-        // newDom = replaceDomWithDiff(state.dom, newDom);
+        // 이 부분을 구현하기위해서는, 별도 이벤트 시스템을 통해, 모든 이벤트들을 관리해야한다.
+        newDom = replaceDomWithDiff(state.dom, newDom, event);
       }
       state.dom = newDom;
     }
@@ -51,7 +56,7 @@ export function component(createComponent) {
     observer();
 
 
-    function replaceDomWithDiff(prevDom, newDom) {
+    function replaceDomWithDiff(prevDom, newDom, event) {
       const newStacks = [newDom];
       const oldStacks = [prevDom];
       let newStack = null;
@@ -67,7 +72,6 @@ export function component(createComponent) {
           oldParentStack = oldStack;
         }
 
-        console.log(newStack);
         if (!oldStack) {
           if (newStack) {
             if (newStack.nodeType === 3) {
@@ -89,8 +93,21 @@ export function component(createComponent) {
             if (newStack.nodeValue !== oldStack.nodeValue) {
               oldStack.replaceWith(newStack);
             }
-          } else {
-            oldStack.replaceWith(newStack);
+          }
+        }
+
+        if (newStack) {
+          // 새롭게 생성한 이벤트들을 이전 node 에 다시 할당한다.
+          // 다만 이전 노드(이미 EVENT 가 바인딩되었던 NODE 이기떄문에, 해당 이벤트가 중복을로 바인딩되는 문제가 있다)
+          // 이 부분도 해결해야할듯하다.
+          const events = event.events.get(newStack);
+
+          if (events) {
+            events.forEach((v) => {
+              const { eventName, listener } = v;
+              // console.log(oldStack, newStack, `on${eventName}`);
+              oldStack[`on${eventName}`] = listener;
+            });
           }
         }
 

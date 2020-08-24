@@ -8,6 +8,7 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
   const [value, setValue] = useState('INPUT VALUE');
   const aXState = useSelector(state => state.aReducer.x);
   const bYState = useSelector(state => state.bReducer.y);
+  const [displayValue, setDisplayValue] = useState('none');
 
   const onClick = useCallback(() => {
     setShow(!show);
@@ -29,6 +30,14 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
     dispatch({ type: bActions.SET_Y, payload: bYState - 1 });
   }, [bYState]);
 
+  const showTest = useCallback(() => {
+    if (displayValue === 'none') {
+      setDisplayValue('block');
+    } else {
+      setDisplayValue('none');
+    }
+  }, [displayValue]);
+
   const Submit = useCallback((value) => {
     setValue(value);
   }, []);
@@ -36,10 +45,6 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
   useEffect(() => {
     console.log('CHANGE PARENT', show);
   }, [show]);
-
-  useEffect(() => {
-    console.log('INIT PARENT');
-  }, []);
 
   const dom = toDOM(
     `<div>
@@ -50,17 +55,26 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
       <button class="btn2">X ADD BUTTON CLICK</button>
       <button class="btn3">X SUB BUTTON CLICK</button>
       <button class="btn4">Y ADD BUTTON CLICK</button>
-      <button class="btn5">Y SUB BUTTON CLICK</button>      
+      <button class="btn5">Y SUB BUTTON CLICK</button>
+      <button class="btn6">SHOW DISPLAY</button>
+      <div class="show-test" style="display:${displayValue}">TEST</div>  
       <child-button></child-button>
       <child-input></child-input>
     </div>`
   );
 
-  event.bind(query(dom, '.btn1'), {click: onClick});
-  event.bind(query(dom, '.btn2'), {click: addX});
-  event.bind(query(dom, '.btn3'), {click: subX});
-  event.bind(query(dom, '.btn4'), {click: addY});
-  event.bind(query(dom, '.btn5'), {click: subY});
+  event.bind(query(dom, '.btn1'), { click: onClick });
+  event.bind(query(dom, '.btn2'), { click: addX });
+  event.bind(query(dom, '.btn3'), { click: subX });
+  event.bind(query(dom, '.btn4'), { click: addY });
+  event.bind(query(dom, '.btn5'), { click: subY });
+
+  const btn6El = query(dom, '.btn6');
+  event.bind(btn6El, { click: showTest });
+
+  btn6El.test = displayValue;
+  console.log(btn6El.test);
+
 
   replaceWith(query(dom, 'child-button'), ChildButton({ props: { buttonName: 'CHILD BUTTON CLICK' }}));
   replaceWith(query(dom, 'child-input'), ChildInput({ props: { Submit }}));

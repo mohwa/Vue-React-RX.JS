@@ -8,6 +8,7 @@ import createUseCallback from './hooks/createUseCallback';
 import createUseSelector from './hooks/createUseSelector';
 import Store from './store';
 import Event from './utils/event';
+import Data from './utils/data';
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 const NODE_TYPE = {
@@ -55,7 +56,7 @@ export function component(createComponent) {
       let newDom = render(event);
 
       if (state.dom) {
-        const oldDom = replaceDomViaOldDom(state.dom, newDom);
+        const oldDom = replaceDomViaOldDom(state.dom, newDom, event);
         newDom = replaceDomViaNewDom(oldDom, newDom, event);
       }
       state.dom = newDom;
@@ -65,7 +66,7 @@ export function component(createComponent) {
     observer();
 
 
-    function replaceDomViaOldDom(oldDom, newDom) {
+    function replaceDomViaOldDom(oldDom, newDom, event) {
       const oldNodes = [oldDom];
       const newNodes = [newDom];
 
@@ -78,20 +79,21 @@ export function component(createComponent) {
 
         switch (true) {
           case (!newNode): {
-            if (oldNode?.nodeType === NODE_TYPE.TEXT_NODE) {
-              oldNode.parentNode.removeChild(oldNode);
-            }
-            break;
-          }
-          default: {
-            if (oldNode?.nodeType === NODE_TYPE.TEXT_NODE) {
-              if (oldNode.nodeValue !== newNode.nodeValue) {
-                oldNode.replaceWith(newNode);
+            switch (true) {
+              case oldNode?.nodeType === NODE_TYPE.ELEMENT_NODE: {
+                // oldNode.parentNode.removeChild(oldNode);
+                break;
+              }
+              case oldNode?.nodeType === NODE_TYPE.TEXT_NODE: {
+                oldNode.parentNode.removeChild(oldNode);
+                break;
               }
             }
             break;
           }
         }
+
+        event.unbind(oldNode);
 
         oldNode?.childNodes.forEach((v, i) => {
           oldNodes.push(oldNode?.childNodes[i]);
@@ -122,31 +124,61 @@ export function component(createComponent) {
 
         switch (true) {
           case (!oldNode): {
-            if (newNode?.nodeType === NODE_TYPE.TEXT_NODE) {
-              prevOldNode.appendChild(newNode);
+            switch (true) {
+              case newNode?.nodeType === NODE_TYPE.ELEMENT_NODE: {
+                // oldNode.parentNode.removeChild(oldNode);
+                break;
+              }
+              case newNode?.nodeType === NODE_TYPE.TEXT_NODE: {
+                prevOldNode.appendChild(newNode);
+                break;
+              }
             }
             break;
           }
           default: {
-            if (newNode?.nodeType === NODE_TYPE.TEXT_NODE) {
-              if (oldNode.nodeValue !== newNode.nodeValue) {
-                oldNode.replaceWith(newNode);
+            if (oldNode.nodeType === newNode.nodeType) {
+              const { nodeType } = oldNode;
+
+              switch (nodeType) {
+                case NODE_TYPE.ELEMENT_NODE: {
+                  Array.from(oldNode.attributes).forEach(({ name }) => {
+                    oldNode.removeAttribute(name);
+                  });
+
+                  Array.from(newNode.attributes).forEach(({ name, value }) => {
+                    oldNode.setAttribute(name, value);
+                  });
+
+                  Data.map(oldNode, (v, k) => {
+                    delete oldNode[k];
+                  });
+
+                  Data.map(newNode, (v, k) => {
+                    oldNode[k] = v;
+                  });
+                  break;
+                }
+                case NODE_TYPE.TEXT_NODE: {
+                  if (oldNode.nodeValue !== newNode.nodeValue) {
+                    oldNode.replaceWith(newNode);
+                  }
+                  break;
+                }
               }
+            } else {
+              oldNode.replaceWith(newNode);
             }
             break;
           }
         }
 
-        if (oldNode && newNode) {
-          const events = event.get(newNode);
+        const events = event.get(newNode);
 
-          event.unbind(oldNode);
-
-          if (events && events.length) {
-            events.forEach((v) => {
-              event.bind(oldNode, {[v.type]: v.handler});
-            });
-          }
+        if (events && events.length) {
+          events.forEach((v) => {
+            event.bind(oldNode, {[v.type]: v.handler});
+          });
         }
 
         newNode?.childNodes.forEach((v, i) => {

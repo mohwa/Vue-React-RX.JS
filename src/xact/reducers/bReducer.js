@@ -11,12 +11,12 @@ export default createReducer(initialState, {
     return {
       ...initialState,
       x: actions.payload,
-    }
+    };
   },
   [bActions.SET_Y](state, actions) {
     return {
       ...initialState,
       y: actions.payload,
-    }
+    };
   },
 });

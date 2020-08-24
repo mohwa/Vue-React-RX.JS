@@ -5,33 +5,71 @@ export default class Event {
   static factory(v) {
     return new Event(v);
   }
-  bind(node, options) {
+  bind(node, handlers) {
+    if (!node) return;
+
     const events = [];
 
-    Object.entries(options).forEach(([eventName, listener]) => {
-      // node.addEventListener(eventName, listener);
-      node[`on${eventName}`] = listener;
-      events.push({ eventName, listener });
+    Object.entries(handlers).forEach(([type, handler]) => {
+      node.addEventListener(type, handler);
+      events.push({ type, handler });
     });
 
     this.events.set(node, events);
   }
-  // unbind(node, eventName, listener) {
-  //   node.removeEvent(eventName, listener);
-  //   const oldEvents = this.events.get(node);
-  //
-  //   const clearedEvents = oldEvents.reduce((acc, v) => {
-  //     const { eventName: _eventName, listener: _listener } = v;
-  //
-  //     if (eventName !== _eventName && listener !== _listener) {
-  //       acc.push(v);
-  //     }
-  //   }, []);
-  //
-  //   if (clearedEvents.length) {
-  //     this.events.set(node, clearedEvents);
-  //   } else {
-  //     this.events.delete(node);
-  //   }
-  // }
+  unbind(node, type, handler) {
+    if (!node) return;
+
+    const oldEvents = this.get(node);
+    let removeEvents = oldEvents;
+
+    switch (true) {
+      case (node && type && !handler): {
+        removeEvents = oldEvents.reduce((acc, v) => {
+          if (v.type === type) acc.push(v);
+
+          return acc;
+        }, []);
+
+        break;
+      }
+      case node && type && handler: {
+        removeEvents = oldEvents.reduce((acc, v) => {
+          if (v.type === type && v.handler === handler) {
+            acc.push(v);
+          }
+          return acc;
+        }, []);
+        break;
+      }
+      default:
+        break;
+    }
+
+    if (removeEvents && removeEvents.length) {
+      removeEvents.forEach(v => {
+        node.removeEventListener(v.type, v.handler);
+      });
+
+      const newEvents = oldEvents.reduce((acc, v) => {
+        const hasEvent = removeEvents.some(vv => {
+          return v.type === vv.type && v.handler === vv.handler;
+        });
+
+        if (!hasEvent) acc.push(v);
+
+        return acc;
+      }, []);
+
+
+      this.events.delete(node);
+      this.events.set(node, newEvents);
+    }
+  }
+  get(node) {
+    return this.events.get(node);
+  }
+  has(node) {
+    return this.events.has(node);
+  }
 }

@@ -30,7 +30,6 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
   }, [bYState]);
 
   const Submit = useCallback((value) => {
-    console.log('value', value);
     setValue(value);
   }, []);
 
@@ -57,14 +56,14 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
     </div>`
   );
 
+  event.bind(query(dom, '.btn1'), {click: onClick});
+  event.bind(query(dom, '.btn2'), {click: addX});
+  event.bind(query(dom, '.btn3'), {click: subX});
+  event.bind(query(dom, '.btn4'), {click: addY});
+  event.bind(query(dom, '.btn5'), {click: subY});
+
   replaceWith(query(dom, 'child-button'), ChildButton({ props: { buttonName: 'CHILD BUTTON CLICK' }}));
   replaceWith(query(dom, 'child-input'), ChildInput({ props: { Submit }}));
-
-  event.bind(query(dom, '.btn1'), { click: onClick });
-  event.bind(query(dom, '.btn2'), { click: addX });
-  event.bind(query(dom, '.btn3'), { click: subX });
-  event.bind(query(dom, '.btn4'), { click: addY });
-  event.bind(query(dom, '.btn5'), { click: subY });
 
   return dom;
 });
@@ -108,9 +107,9 @@ export const ChildInput = component(({ props, toDOM }, { useState, useEffect, us
   const dom = toDOM(
     `<div>
        <input type="text" />
-       <button>제출</button>
+       <button>선택</button>
        <div>${value}</div>
-     </div>`
+     </>`
   );
 
   event.bind(query(dom, 'input'), {
@@ -119,7 +118,6 @@ export const ChildInput = component(({ props, toDOM }, { useState, useEffect, us
 
   event.bind(query(dom, 'button'), {
     click: (e) => {
-      console.dir(e.target);
       props.Submit(e.target.previousElementSibling.value);
     }
   });

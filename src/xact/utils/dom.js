@@ -10,22 +10,18 @@ export function toDOM(template) {
 }
 
 export function append(parentNode, childNode) {
-  return parentNode.appendChild(childNode);
+  if (parentNode && childNode) {
+    parentNode.appendChild(childNode);
+  }
 }
 
-export function query(v, selector) {
-  return v.querySelector(selector);
+export function query(node, selector) {
+  return node.querySelector(selector);
 }
-
-// export function events(node, options) {
-//   Object
-//     .entries(options)
-//     .forEach(([eventName, listener]) => {
-//       node.addEventListener(eventName, listener);
-//     });
-// }
 
 export function replaceWith(oldNode, newNode) {
-  oldNode.replaceWith(newNode);
+  if (oldNode && newNode) {
+    oldNode.replaceWith(newNode);
+  }
 }
 

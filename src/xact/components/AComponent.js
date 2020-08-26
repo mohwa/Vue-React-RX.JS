@@ -72,10 +72,6 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
   const btn6El = query(dom, '.btn6');
   event.bind(btn6El, { click: showTest });
 
-  btn6El.test = displayValue;
-  console.log(btn6El.test);
-
-
   replaceWith(query(dom, 'child-button'), ChildButton({ props: { buttonName: 'CHILD BUTTON CLICK' }}));
   replaceWith(query(dom, 'child-input'), ChildInput({ props: { Submit }}));
 
@@ -84,12 +80,11 @@ export const AComponent = component(({ props, toDOM }, { useState, useEffect, us
 
 export const ChildButton = component(({ props, toDOM }, { useState, useEffect, useCallback, event }) => {
   const [show, setShow] = useState(true);
-  const [arr, setArr] = useState([]);
 
   const onClick = useCallback(() => {
+    console.log(1);
     setShow(!show);
-    setArr([show, show]);
-  }, [show, arr]);
+  }, [show]);
 
   useEffect(() => {
     console.log('CHANGE CHILD', show);
@@ -101,8 +96,15 @@ export const ChildButton = component(({ props, toDOM }, { useState, useEffect, u
 
   const dom = toDOM(
     `<div>
-       <div>${show}, ${`[${String(arr)}]`}</div>
-       <button type="button">${props.buttonName}</button>
+      <div>${show}</div>
+      <button type="button">${props.buttonName}</button>
+      ${(() => {
+        if (show) {
+          return '<div>TEST2</div>';
+        } else {
+          return '<div>TEST3</div>';
+        }
+      })()}       
      </div>`
   );
 
@@ -123,7 +125,7 @@ export const ChildInput = component(({ props, toDOM }, { useState, useEffect, us
        <input type="text" />
        <button>선택</button>
        <div>${value}</div>
-     </>`
+     </div>`
   );
 
   event.bind(query(dom, 'input'), {

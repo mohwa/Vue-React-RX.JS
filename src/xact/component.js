@@ -1,5 +1,5 @@
 import Subject from '@rx/Subject';
-import { toDOM } from './utils/dom';
+import { toDOM, removeAllAttributes, removeAllProperties, copyAllAttributes, copyAllProperties } from './utils/dom';
 import StateManager from "./hooks/stateManager";
 import createUseState from './hooks/createUseState';
 import createUseEffect from './hooks/createUseEffect';
@@ -8,7 +8,6 @@ import createUseCallback from './hooks/createUseCallback';
 import createUseSelector from './hooks/createUseSelector';
 import Store from './store';
 import Event from './utils/event';
-import Data from './utils/data';
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 const NODE_TYPE = {
@@ -22,6 +21,14 @@ const NODE_TYPE = {
   DOCUMENT_FRAGMENT_NODE: 11,
 };
 
+function copyNodeAttrsAndProps(targetNode, originalNode) {
+  removeAllAttributes(targetNode);
+  removeAllProperties(targetNode);
+
+  copyAllAttributes(originalNode, targetNode);
+  copyAllProperties(originalNode, targetNode);
+}
+
 export function component(createComponent) {
   return ({props = {}} = {}) => {
     const subject = Subject.factory();
@@ -32,11 +39,12 @@ export function component(createComponent) {
     const useCallback = createUseCallback(stateManager);
     const useSelector = createUseSelector(stateManager);
     const dispatch = Store.createDispatch(stateManager, subject);
+    const event = Event.factory();
     const state = {
       dom: null,
     };
 
-    const render = (event) => {
+    const render = () => {
       return createComponent({
         props,
         toDOM,
@@ -52,12 +60,11 @@ export function component(createComponent) {
     };
 
     function observer() {
-      const event = Event.factory();
-      let newDom = render(event);
+      let newDom = render();
 
       if (state.dom) {
-        const oldDom = replaceDomViaOldDom(state.dom, newDom, event);
-        newDom = replaceDomViaNewDom(oldDom, newDom, event);
+        const oldDom = replaceDomOnOldDom(state.dom, newDom, event);
+        newDom = replaceDomOnNewDom(oldDom, newDom, event);
       }
       state.dom = newDom;
     }
@@ -66,7 +73,7 @@ export function component(createComponent) {
     observer();
 
 
-    function replaceDomViaOldDom(oldDom, newDom, event) {
+    function replaceDomOnOldDom(oldDom, newDom) {
       const oldNodes = [oldDom];
       const newNodes = [newDom];
 
@@ -81,7 +88,6 @@ export function component(createComponent) {
           case (!newNode): {
             switch (true) {
               case oldNode?.nodeType === NODE_TYPE.ELEMENT_NODE: {
-                // oldNode.parentNode.removeChild(oldNode);
                 break;
               }
               case oldNode?.nodeType === NODE_TYPE.TEXT_NODE: {
@@ -93,8 +99,6 @@ export function component(createComponent) {
           }
         }
 
-        event.unbind(oldNode);
-
         oldNode?.childNodes.forEach((v, i) => {
           oldNodes.push(oldNode?.childNodes[i]);
           newNodes.push(newNode?.childNodes[i]);
@@ -105,7 +109,7 @@ export function component(createComponent) {
       return oldDom;
     }
 
-    function replaceDomViaNewDom(oldDom, newDom, event) {
+    function replaceDomOnNewDom(oldDom, newDom, event) {
       const oldNodes = [oldDom];
       const newNodes = [newDom];
 
@@ -126,7 +130,6 @@ export function component(createComponent) {
           case (!oldNode): {
             switch (true) {
               case newNode?.nodeType === NODE_TYPE.ELEMENT_NODE: {
-                // oldNode.parentNode.removeChild(oldNode);
                 break;
               }
               case newNode?.nodeType === NODE_TYPE.TEXT_NODE: {
@@ -142,21 +145,7 @@ export function component(createComponent) {
 
               switch (nodeType) {
                 case NODE_TYPE.ELEMENT_NODE: {
-                  Array.from(oldNode.attributes).forEach(({ name }) => {
-                    oldNode.removeAttribute(name);
-                  });
-
-                  Array.from(newNode.attributes).forEach(({ name, value }) => {
-                    oldNode.setAttribute(name, value);
-                  });
-
-                  Data.map(oldNode, (v, k) => {
-                    delete oldNode[k];
-                  });
-
-                  Data.map(newNode, (v, k) => {
-                    oldNode[k] = v;
-                  });
+                  copyNodeAttrsAndProps(oldNode, newNode);
                   break;
                 }
                 case NODE_TYPE.TEXT_NODE: {
@@ -173,13 +162,13 @@ export function component(createComponent) {
           }
         }
 
-        const events = event.get(newNode);
+        const newEvents = event.get(newNode);
 
-        if (events && events.length) {
-          events.forEach((v) => {
-            event.bind(oldNode, {[v.type]: v.handler});
-          });
-        }
+        event.unbind(oldNode);
+
+        newEvents?.forEach((v) => {
+          event.bind(oldNode, {[v.type]: v.handler});
+        });
 
         newNode?.childNodes.forEach((v, i) => {
           newNodes.push(newNode?.childNodes[i]);

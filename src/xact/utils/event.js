@@ -1,14 +1,24 @@
 export default class Event {
   events = new WeakMap();
-  constructor() {
+  static factory() {
+    return new Event();
   }
-  static factory(v) {
-    return new Event(v);
+  one(node, handlers) {
+    const oldEvents = this.get(node) || [];
+
+    oldEvents.forEach(({ type, handler }) => {
+      this.unbind(node, type, handler);
+    });
+    this.bind(node, handlers);
   }
   bind(node, handlers) {
     if (!node) return;
 
-    const events = [];
+    let events = [];
+
+    if (this.has(node)) {
+      events = [...events, ...this.get(node)];
+    }
 
     Object.entries(handlers).forEach(([type, handler]) => {
       node.addEventListener(type, handler);
@@ -18,7 +28,7 @@ export default class Event {
     this.events.set(node, events);
   }
   unbind(node, type, handler) {
-    if (!node) return;
+    if (!node || !this.has(node)) return;
 
     const oldEvents = this.get(node);
     let removeEvents = oldEvents;
@@ -26,11 +36,11 @@ export default class Event {
     switch (true) {
       case (node && type && !handler): {
         removeEvents = oldEvents.reduce((acc, v) => {
-          if (v.type === type) acc.push(v);
-
+          if (v.type === type) {
+            acc.push(v);
+          }
           return acc;
         }, []);
-
         break;
       }
       case node && type && handler: {
@@ -46,25 +56,30 @@ export default class Event {
         break;
     }
 
-    if (removeEvents && removeEvents.length) {
-      removeEvents.forEach(v => {
-        node.removeEventListener(v.type, v.handler);
-      });
+    if (removeEvents.length) {
+      removeEvents.forEach(v => node.removeEventListener(v.type, v.handler));
 
-      const newEvents = oldEvents.reduce((acc, v) => {
-        const hasEvent = removeEvents.some(vv => {
-          return v.type === vv.type && v.handler === vv.handler;
+      const newEvents = oldEvents.reduce((acc, oldEvent) => {
+        const hasEvent = removeEvents.some(removeEvent => {
+          return (
+            oldEvent.type === removeEvent.type &&
+            oldEvent.handler === removeEvent.handler
+          );
         });
 
-        if (!hasEvent) acc.push(v);
+        if (!hasEvent) acc.push(oldEvent);
 
         return acc;
       }, []);
 
-
       this.events.delete(node);
-      this.events.set(node, newEvents);
+
+      if (newEvents.length) {
+        this.events.set(node, newEvents);
+      }
     }
+
+    return node;
   }
   get(node) {
     return this.events.get(node);
